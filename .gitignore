@@ -1,0 +1,17 @@
+# Python Sanal Ortamı (Çok Önemli - Playwright burada)
+backend/.venv/
+.venv/
+venv/
+ENV/
+
+# Node Bağımlılıkları (SWC burada)
+frontend/node_modules/
+backend/node_modules/
+node_modules/
+
+# Next.js Build çıktıları
+frontend/.next/
+
+# Çevre Değişkenleri ve Sistem Dosyaları
+.env*
+.DS_Store

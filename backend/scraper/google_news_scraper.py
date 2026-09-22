@@ -8,7 +8,7 @@ class GoogleNewsScraper(BaseScraper):
     source_name = "Google Haberler"
 
     async def scrape(self, hedef_adi: str) -> Optional[SourceResult]:
-        query = quote_plus(hedef_adi)
+        query = quote_plus(f'"{hedef_adi}"')
         url = f"https://news.google.com/rss/search?q={query}&hl=tr&gl=TR&ceid=TR:tr"
         page = await self.async_fetch(url)
         if not page:

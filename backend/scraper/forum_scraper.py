@@ -28,12 +28,11 @@ class ForumScraper(BaseScraper):
         )
 
     async def _scrape_eksi(self, hedef_adi: str) -> list[Haber]:
-        q = quote_plus(hedef_adi)
+        q = quote_plus(f'"{hedef_adi}"')
         page = await self.async_fetch(f"https://eksisozluk.com/?q={q}&_f=1")
         if not page:
             return []
 
-        # Sayfa başlığından slug al (redirect sonrası URL'i bilemeyiz ama title'dan slug türetilebilir)
         page_title = page.css("title::text").get("").split(" - ")[0].strip()
         haberler = []
         for li in page.css("li[data-id]")[:8]:
@@ -46,7 +45,7 @@ class ForumScraper(BaseScraper):
         return haberler
 
     async def _scrape_donanimhaber(self, hedef_adi: str) -> list[Haber]:
-        q = quote_plus(f"site:forum.donanimhaber.com {hedef_adi}")
+        q = quote_plus(f'site:forum.donanimhaber.com "{hedef_adi}"')
         page = await self.async_fetch(f"https://lite.duckduckgo.com/lite/?q={q}")
         if not page:
             return []

@@ -3,9 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from config import settings
-from db.database import engine
+from db.database import engine, run_light_migrations
 from db import models
-from api.routes import analyze, reports, export
+from api.routes import analyze, reports, export, nace, auth, gundem
 
 app = FastAPI(
     title="İtibar Tespit API",
@@ -21,14 +21,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router, prefix="/api")
 app.include_router(analyze.router, prefix="/api")
 app.include_router(reports.router, prefix="/api")
 app.include_router(export.router, prefix="/api")
+app.include_router(nace.router, prefix="/api")
+app.include_router(gundem.router, prefix="/api")
 
 
 @app.on_event("startup")
 async def startup_event():
     models.Base.metadata.create_all(bind=engine)
+    run_light_migrations()
 
 
 @app.get("/", include_in_schema=False)

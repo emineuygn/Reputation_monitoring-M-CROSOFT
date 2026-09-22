@@ -13,8 +13,17 @@ CRITICAL_KEYWORDS = [
 class KapScraper(BaseScraper):
     source_name = "KAP (Kamuyu Aydınlatma Platformu)"
 
+    def __init__(self, vergi_no: Optional[str] = None, nace_kodu: Optional[str] = None):
+        super().__init__()
+        self.vergi_no = vergi_no
+        self.nace_kodu = nace_kodu
+
     async def scrape(self, hedef_adi: str) -> Optional[SourceResult]:
-        query = quote_plus(f'KAP {hedef_adi} bildiri')
+        query_parts = [f'KAP "{hedef_adi}"']
+        if self.vergi_no:
+            query_parts.append(f'"{self.vergi_no}"')
+        query_parts.append("bildiri")
+        query = quote_plus(" ".join(query_parts))
         url = f"https://news.google.com/rss/search?q={query}&hl=tr&gl=TR&ceid=TR:tr"
         page = await self.async_fetch(url)
         if not page:
@@ -31,7 +40,6 @@ class KapScraper(BaseScraper):
             if title:
                 haberler.append(Haber(baslik=title, url=link or None))
 
-        # Kritik içerikleri öne al
         haberler.sort(
             key=lambda h: any(kw in h.baslik.lower() for kw in CRITICAL_KEYWORDS),
             reverse=True,

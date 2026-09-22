@@ -48,7 +48,6 @@ def scan_keywords(kaynaklar: List[SourceResult]) -> tuple[int, list[str], list[K
     min_score = 0
 
     for kaynak in kaynaklar:
-        # Önce individual haberler, yoksa özet metni
         candidates = []
         if kaynak.haberler:
             for h in kaynak.haberler:
@@ -104,10 +103,15 @@ class RiskAnalyzer:
     ) -> AnalyzeResponse:
         keyword_floor, found_keywords, hits = scan_keywords(kaynaklar)
 
+        aday_bayraklar = [
+            {"kaynak": h.kaynak_adi, "baslik": h.baslik, "keyword": h.keyword, "url": h.url}
+            for h in hits
+        ]
+
         kaynak_metni = self._format_sources(kaynaklar)
         system_prompt = get_system_prompt(analiz_turu)
         user_prompt = build_user_prompt(
-            hedef_adi, kaynak_metni, analiz_turu, found_keywords or None
+            hedef_adi, kaynak_metni, analiz_turu, aday_bayraklar or None
         )
 
         raw_response = None
@@ -120,27 +124,16 @@ class RiskAnalyzer:
             parsed = self._parse_response(raw_response)
             if parsed:
                 ai_score = parsed.get("risk_skoru", 0)
-                final_score = max(ai_score, keyword_floor)
-                final_severity = self._score_to_severity(final_score)
-
                 flags = [RedFlag(**f) for f in parsed.get("kirmizi_bayraklar", [])]
-
-                # Keyword hit'lerini ekle (AI'ın üretmediği, bizim tespit ettiğimiz)
-                kw_flags = hits_to_flags(hits, ai_score, final_score)
-                # AI zaten aynı başlığı eklediyse duplicate olmasın
-                existing_titles = {f.baslik.lower()[:60] for f in flags}
-                for kf in kw_flags:
-                    if kf.baslik.lower()[:60] not in existing_titles:
-                        flags.insert(0, kf)
-
                 return AnalyzeResponse(
                     hedef_adi=hedef_adi,
                     analiz_turu=analiz_turu,
-                    risk_skoru=final_score,
-                    risk_seviyesi=final_severity,
+                    risk_skoru=ai_score,
+                    risk_seviyesi=self._score_to_severity(ai_score),
                     kirmizi_bayraklar=flags,
                     kaynaklar=kaynaklar,
                     genel_ozet=parsed.get("genel_ozet", ""),
+                    kisa_yorum=parsed.get("kisa_yorum", ""),
                     tarih=datetime.now(timezone.utc),
                 )
 
@@ -156,11 +149,16 @@ class RiskAnalyzer:
     def _format_sources(self, kaynaklar: List[SourceResult]) -> str:
         lines = []
         for k in kaynaklar:
-            lines.append(f"[{k.kaynak_adi}] (Sonuç sayısı: {k.sonuc_sayisi})")
-            lines.append(f"  URL: {k.url or 'N/A'}")
-            lines.append(f"  İçerik: {k.bulunan_icerik_ozeti}")
+            if k.sonuc_sayisi == 0:
+                continue
+            lines.append(f"[{k.kaynak_adi}] ({k.sonuc_sayisi} sonuç)")
+            if k.haberler:
+                for h in k.haberler[:8]:
+                    lines.append(f"  - {h.baslik}")
+            elif k.bulunan_icerik_ozeti:
+                lines.append(f"  İçerik: {k.bulunan_icerik_ozeti}")
             lines.append("")
-        return "\n".join(lines)
+        return "\n".join(lines) if lines else "Hiçbir kaynakta veri bulunamadı."
 
     def _parse_response(self, raw: str) -> dict:
         raw = raw.strip()
@@ -188,7 +186,7 @@ class RiskAnalyzer:
     ) -> AnalyzeResponse:
         total_results = sum(k.sonuc_sayisi for k in kaynaklar)
         score = max(keyword_floor, min(30, total_results // 5))
-        tur_label = "kişi" if analiz_turu == "kisi" else "firma"
+        tur_label = "kişisi" if analiz_turu == "kisi" else "firması"
 
         flags = hits_to_flags(hits or [], 0, score)
 
@@ -200,9 +198,18 @@ class RiskAnalyzer:
             kirmizi_bayraklar=flags,
             kaynaklar=kaynaklar,
             genel_ozet=(
-                f"'{hedef_adi}' {tur_label}ı için otomatik analiz tamamlanamadı. "
-                + (f"Kritik kelimeler tespit edildi. " if hits else "")
+                f"'{hedef_adi}' {tur_label} için otomatik analiz tamamlanamadı. "
+                + ("Kritik kelimeler tespit edildi. " if hits else "")
                 + "Manuel inceleme önerilir."
             ),
+            kisa_yorum=self._fallback_kisa_yorum(hedef_adi, analiz_turu, score),
             tarih=datetime.now(timezone.utc),
         )
+
+    def _fallback_kisa_yorum(self, hedef_adi: str, analiz_turu: str, score: int) -> str:
+        ilgi_eki = "şirketiyle" if analiz_turu != "kisi" else "kişisiyle"
+        if score > 60:
+            return f"{hedef_adi} {ilgi_eki} ilgili tespit edilen bulgular ciddi risk taşıyor, manuel inceleme şart."
+        if score > 30:
+            return f"{hedef_adi} {ilgi_eki} ilgili bazı olumsuz bulgular var, dikkatli inceleme önerilir."
+        return f"{hedef_adi} {ilgi_eki} ilgili ciddi bir olumsuz bulguya rastlanmadı."

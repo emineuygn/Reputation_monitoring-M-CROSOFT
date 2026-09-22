@@ -28,7 +28,6 @@ class SikayetvarScraper(BaseScraper):
             except ValueError:
                 pass
 
-        # Şikayet başlığı + linki
         haberler = []
         for el in page.css("h3 a")[:10]:
             title = el.css("::text").get("").strip()

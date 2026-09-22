@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>İtibar Raporu — {{ firma_adi }}</title>
+  <title>İtibar Raporu — {{ hedef_adi }}</title>
   <style>
     @page { margin: 2cm; }
     body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 12px; color: #1a1a2e; line-height: 1.6; }
@@ -28,7 +28,9 @@
 <body>
   <h1>İtibar Tespit Raporu</h1>
   <div class="meta">
-    <strong>Firma:</strong> {{ firma_adi }} &nbsp;|&nbsp;
+    <strong>{{ hedef_etiketi }}:</strong> {{ hedef_adi }} &nbsp;|&nbsp;
+    {% if vergi_no %}<strong>VKN:</strong> {{ vergi_no }} &nbsp;|&nbsp;{% endif %}
+    {% if nace_kodu %}<strong>NACE:</strong> {{ nace_kodu }} &nbsp;|&nbsp;{% endif %}
     <strong>Rapor Tarihi:</strong> {{ tarih }} &nbsp;|&nbsp;
     <strong>Rapor No:</strong> #{{ rapor_id }}
   </div>

@@ -25,12 +25,12 @@ export default function SourceList({ sources }: Props) {
 
           return (
             <div key={i}>
-              {/* Kaynak satırı */}
+
               <div
                 className={`flex items-center gap-3 px-6 py-3 ${hasLinks ? 'cursor-pointer hover:bg-gray-50' : ''} transition-colors`}
                 onClick={() => hasLinks && setExpanded(isOpen ? null : i)}
               >
-                {/* Kaynak adı */}
+
                 <div className="w-44 shrink-0">
                   {s.url ? (
                     <a
@@ -47,20 +47,20 @@ export default function SourceList({ sources }: Props) {
                   )}
                 </div>
 
-                {/* Sonuç sayısı */}
+
                 <span className={`shrink-0 w-10 text-center text-xs font-semibold px-2 py-0.5 rounded-full
                   ${s.sonuc_sayisi > 0 ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>
                   {s.sonuc_sayisi}
                 </span>
 
-                {/* Özet */}
+
                 <span className="flex-1 text-xs text-gray-500 truncate">
                   {s.bulunan_icerik_ozeti.length > 100
                     ? s.bulunan_icerik_ozeti.slice(0, 100) + '…'
                     : s.bulunan_icerik_ozeti}
                 </span>
 
-                {/* Açma/kapama oku */}
+
                 {hasLinks && (
                   <span className={`text-gray-400 text-xs transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
                     ▼
@@ -68,7 +68,7 @@ export default function SourceList({ sources }: Props) {
                 )}
               </div>
 
-              {/* Link listesi (açıldığında) */}
+
               {isOpen && hasLinks && (
                 <ul className="px-6 pb-4 space-y-1.5 bg-gray-50 border-t border-gray-100">
                   {s.haberler!.map((h, j) => (

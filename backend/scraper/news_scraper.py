@@ -8,7 +8,7 @@ class NewsScraper(BaseScraper):
     source_name = "Haber Siteleri (Bing News)"
 
     async def scrape(self, hedef_adi: str) -> Optional[SourceResult]:
-        query = quote_plus(f"{hedef_adi} haber")
+        query = quote_plus(f'"{hedef_adi}" haber')
         url = f"https://www.bing.com/news/search?q={query}&format=RSS"
         page = await self.async_fetch(url)
         if not page:

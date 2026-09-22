@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: itibar-tespit-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRE_MINUTES
+        value: "10080"
+      - key: CORS_ORIGINS
+        value: https://DEGISTIR-vercel-domaniniz.vercel.app
+      - key: DATABASE_URL
+        fromDatabase:
+          name: itibar-tespit-db
+          property: connectionString
+
+databases:
+  - name: itibar-tespit-db
+    plan: free

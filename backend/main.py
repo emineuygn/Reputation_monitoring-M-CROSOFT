@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -6,6 +8,8 @@ from config import settings
 from db.database import engine, run_light_migrations
 from db import models
 from api.routes import analyze, reports, export, nace, auth, gundem
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="İtibar Tespit API",
@@ -33,6 +37,12 @@ app.include_router(gundem.router, prefix="/api")
 async def startup_event():
     models.Base.metadata.create_all(bind=engine)
     run_light_migrations()
+
+    if settings.jwt_secret == "dev-secret-change-me":
+        logger.warning(
+            "⚠️  JWT_SECRET varsayılan (geliştirme) değerinde çalışıyor. "
+            "Production'da mutlaka .env / ortam değişkeni ile rastgele, gizli bir değer atayın."
+        )
 
 
 @app.get("/", include_in_schema=False)

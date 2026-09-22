@@ -22,7 +22,14 @@ def get_db():
 
 def run_light_migrations():
     """create_all() yalnızca eksik tabloları oluşturur; mevcut 'reports'
-    tablosuna sonradan eklenen kolonları burada elle ekliyoruz."""
+    tablosuna sonradan eklenen kolonları burada elle ekliyoruz.
+
+    PRAGMA table_info SQLite'a özeldir — Postgres gibi başka bir DATABASE_URL
+    ile (örn. Render'da) yeni bir veritabanında create_all() zaten tüm
+    kolonlarla tabloyu oluşturduğu için bu adıma gerek kalmaz."""
+    if not settings.database_url.startswith("sqlite"):
+        return
+
     with engine.connect() as conn:
         existing = {row[1] for row in conn.execute(text("PRAGMA table_info(reports)"))}
         for column, ddl_type in (

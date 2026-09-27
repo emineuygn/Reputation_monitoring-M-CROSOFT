@@ -9,7 +9,6 @@ from scraper.google_news_scraper import GoogleNewsScraper
 from scraper.sikayetvar_scraper import SikayetvarScraper
 from scraper.kap_scraper import KapScraper
 from scraper.forum_scraper import ForumScraper
-from scraper.linkedin_scraper import LinkedinScraper
 from agent.risk_analyzer import RiskAnalyzer
 from auth.deps import get_current_user
 from db.database import get_db
@@ -19,13 +18,15 @@ router = APIRouter()
 
 
 def get_scrapers(analiz_turu: str, vergi_no: str = None, nace_kodu: str = None):
+    # NOT: LinkedinScraper (patchright/Chromium) kasıtlı olarak burada değil —
+    # Render free tier'ın 512MB bellek sınırında tam bir tarayıcı başlatmak
+    # container'ı OOM'a düşürüp tüm isteği süresiz askıda bırakıyordu.
     if analiz_turu == "kisi":
         return [
             NewsScraper(),
             GoogleNewsScraper(),
             KapScraper(),
             ForumScraper(),
-            LinkedinScraper(kisi_modu=True),
         ]
     return [
         NewsScraper(),
@@ -33,8 +34,14 @@ def get_scrapers(analiz_turu: str, vergi_no: str = None, nace_kodu: str = None):
         SikayetvarScraper(),
         KapScraper(vergi_no=vergi_no, nace_kodu=nace_kodu),
         ForumScraper(),
-        LinkedinScraper(kisi_modu=False),
     ]
+
+
+async def _scrape_with_timeout(scraper, hedef_adi: str, timeout: float = 25.0):
+    try:
+        return await asyncio.wait_for(scraper.scrape(hedef_adi), timeout=timeout)
+    except asyncio.TimeoutError:
+        return scraper.empty_result("Zaman aşımına uğradı.")
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
@@ -53,7 +60,7 @@ async def analyze(
     scrapers = get_scrapers(request.analiz_turu, vergi_no, nace_kodu)
 
     results = await asyncio.gather(
-        *[s.scrape(hedef_adi) for s in scrapers],
+        *[_scrape_with_timeout(s, hedef_adi) for s in scrapers],
         return_exceptions=True,
     )
 

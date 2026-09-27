@@ -16,7 +16,7 @@ class FoundryClient:
         if self._client is None:
             from openai import OpenAI
             self._client = OpenAI(
-                base_url=FOUNDRY_BASE_URL, api_key="foundry-local", timeout=60.0, max_retries=0
+                base_url=FOUNDRY_BASE_URL, api_key="foundry-local", timeout=6.0, max_retries=0
             )
         return self._client
 

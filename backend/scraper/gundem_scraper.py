@@ -23,8 +23,8 @@ class GundemScraper(BaseScraper):
         haberler = []
         for el in items:
             title = el.css("title::text").get("").strip()
-            link = el.css("link::text").get("").strip()
+            link = self.extract_google_news_link(el)
             source = el.css("source::text").get("").strip() or "Google Haberler"
             if title:
-                haberler.append(GundemHaber(baslik=title, url=link or None, kaynak=source))
+                haberler.append(GundemHaber(baslik=title, url=link, kaynak=source))
         return haberler

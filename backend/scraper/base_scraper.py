@@ -54,3 +54,15 @@ class BaseScraper:
             bulunan_icerik_ozeti=note,
             sonuc_sayisi=0,
         )
+
+    @staticmethod
+    def extract_google_news_link(item_el) -> Optional[str]:
+        """Google Haberler RSS'inde <link> etiketi kapanmadan bitiyor
+        (<link>URL<guid>...), bu yüzden HTML parser'lar onu <link>
+        içeriğine dahil etmiyor. Aynı makale kimliği düzgün kapanan
+        <guid> etiketinde de bulunduğu için linki oradan yeniden kuruyoruz."""
+        link = item_el.css("link::text").get("").strip()
+        if link:
+            return link
+        guid = item_el.css("guid::text").get("").strip()
+        return f"https://news.google.com/rss/articles/{guid}?oc=5" if guid else None

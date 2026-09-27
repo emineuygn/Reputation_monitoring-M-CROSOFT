@@ -21,9 +21,9 @@ class GoogleNewsScraper(BaseScraper):
         haberler = []
         for el in items:
             title = el.css("title::text").get("").strip()
-            link = el.css("link::text").get("").strip()
+            link = self.extract_google_news_link(el)
             if title:
-                haberler.append(Haber(baslik=title, url=link or None))
+                haberler.append(Haber(baslik=title, url=link))
 
         ozet = "; ".join(h.baslik for h in haberler[:5])
         return SourceResult(

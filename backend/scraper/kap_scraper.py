@@ -36,9 +36,9 @@ class KapScraper(BaseScraper):
         haberler = []
         for el in items:
             title = el.css("title::text").get("").strip()
-            link = el.css("link::text").get("").strip()
+            link = self.extract_google_news_link(el)
             if title:
-                haberler.append(Haber(baslik=title, url=link or None))
+                haberler.append(Haber(baslik=title, url=link))
 
         haberler.sort(
             key=lambda h: any(kw in h.baslik.lower() for kw in CRITICAL_KEYWORDS),
